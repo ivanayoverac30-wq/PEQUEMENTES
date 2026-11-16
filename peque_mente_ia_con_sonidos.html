@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PEQUE-MENTE IA</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Trebuchet MS", Arial, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg,#e3f4ff,#ffe2ec,#fff2bf);
+    color: #354052;
+    min-height: 100vh;
+}
+
+.oculto { display: none !important; }
+
+.pantalla {
+    min-height: 100vh;
+    padding: 85px 20px 40px;
+    text-align: center;
+    position: relative;
+}
+
+h1 { color: #7954b5; margin: 20px; font-size: 2.8rem; }
+h2 { color: #7954b5; margin: 15px; font-size: 2.2rem; }
+p { line-height: 1.6; font-size: 1.4rem; }
+
+button {
+    background: #9874d0;
+    color: white;
+    border: none;
+    padding: 16px 28px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: pointer;
+    margin: 10px;
+    transition: .3s;
+}
+button:hover { transform: scale(1.05); background: #7651b5; }
+button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+input {
+    width: 100%;
+    padding: 18px;
+    border: 3px solid #e6dafa;
+    border-radius: 18px;
+    margin: 12px 0;
+    font-size: 1.2rem;
+}
+
+/* --- INDICADOR DE RENDIMIENTO --- */
+.indicador-progreso {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    padding: 12px 25px;
+    border-radius: 25px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #f39c12;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-superior-izq {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    margin: 0;
+    z-index: 100;
+    padding: 12px 25px;
+    font-size: 1rem;
+}
+
+.btn-superior-der {
+    position: fixed;
+    top: 20px;
+    right: 150px;
+    margin: 0;
+    z-index: 1000;
+    padding: 12px 25px;
+    font-size: 1rem;
+}
+
+.btn-fijo-izq {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    margin: 0;
+    z-index: 100;
+}
+
+/* --- MODAL DE FEEDBACK --- */
+.modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.modal.mostrar { opacity: 1; pointer-events: auto; }
+
+.modal-contenido {
+    background: white;
+    padding: 50px;
+    border-radius: 40px;
+    text-align: center;
+    transform: scale(0.7);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    max-width: 500px;
+    width: 90%;
+}
+.modal.mostrar .modal-contenido { transform: scale(1); }
+
+.cara-niño { font-size: 120px; margin-bottom: 20px; }
+.mensaje-modal { font-size: 2.2rem; font-weight: bold; }
+
+.login { display: flex; align-items: center; justify-content: center; }
+
+.caja-login {
+    background: white;
+    padding: 50px;
+    border-radius: 35px;
+    width: 100%;
+    max-width: 550px;
+    box-shadow: 0 10px 30px #0002;
+}
+
+.logo img { width: 100%; max-width: 350px; height: auto; object-fit: contain; }
+
+.secundario { background: #ef98b5; }
+.volver { background: #68b8d5; }
+.salir { background: #e98c9e; }
+
+header { padding: 10px; margin-bottom: 25px; }
+
+.contenedor {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 35px;
+    max-width: 1400px;
+    margin: 20px auto 35px auto;
+}
+
+.tarjeta {
+    width: 340px;
+    background: white;
+    border-radius: 32px;
+    padding: 35px;
+    box-shadow: 0 10px 25px #0002;
+    cursor: pointer;
+    transition: .3s;
+}
+.tarjeta:hover { transform: translateY(-10px); }
+
+.tarjeta-principal { width: 450px; padding: 45px; }
+.cuentos-card { background: #ffe2ec; }
+.canciones-card { background: #ddf7e8; }
+.categoria {
+    width: 280px; background: white; padding: 35px; border-radius: 30px;
+    cursor: pointer; box-shadow: 0 8px 20px #0002; transition: .3s;
+}
+.categoria:hover { transform: scale(1.06); }
+.categoria span { font-size: 80px; display: block; }
+.ilustracion { font-size: 70px; }
+
+/* --- ESTILO DE LIBRO DE CUENTOS --- */
+.historia {
+    max-width: 1100px;
+    margin: 10px auto 30px auto;
+    background: #fffdf8;
+    padding: 40px;
+    border-radius: 15px 40px 40px 15px;
+    box-shadow: -10px 0 20px rgba(0,0,0,0.05), inset 15px 0 30px rgba(0,0,0,0.08);
+    border-right: 8px solid #eae5d9;
+    overflow: hidden;
+}
+
+.libro-cerrado { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.libro-abierto { display: flex; flex-direction: row; align-items: center; background: linear-gradient(to right, rgba(0,0,0,0) 48%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0) 52%); }
+.libro-abierto .escena-imagen { flex: 1; padding: 20px 40px 20px 20px; }
+.libro-abierto .contenedor-texto { flex: 1; padding: 20px 20px 20px 40px; display: flex; flex-direction: column; justify-content: center; }
+
+.vuelta-salida { animation: pageFlipOut 0.4s ease-in forwards; transform-origin: center; }
+.vuelta-entrada { animation: pageFlipIn 0.4s ease-out forwards; transform-origin: center; }
+
+@keyframes pageFlipOut {
+    0% { transform: perspective(1200px) rotateY(0deg); opacity: 1; }
+    100% { transform: perspective(1200px) rotateY(-90deg); opacity: 0; }
+}
+@keyframes pageFlipIn {
+    0% { transform: perspective(1200px) rotateY(90deg); opacity: 0; }
+    100% { transform: perspective(1200px) rotateY(0deg); opacity: 1; }
+}
+
+.escena-imagen { width: 100%; margin: 20px auto; display: flex; justify-content: center; align-items: center; }
+.foto-cuento { width: 100%; max-height: 400px; object-fit: contain; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); border: 8px solid white; }
+
+.preguntas, .memoria-juego {
+    max-width: 950px; margin: 30px auto; background: white; padding: 40px;
+    border-radius: 35px; box-shadow: 0 10px 30px #0002;
+}
+
+.texto-escena { font-size: 32px; line-height: 1.8; margin-bottom: 25px; }
+
+.opciones { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; margin: 35px; }
+.opcion {
+    width: 160px; height: 160px; background: #e3f4ff; color: #354052; font-size: 75px;
+    border: 4px solid #c4e6f4; border-radius: 25px; cursor: pointer;
+}
+.opcion:hover { background: #c4e6f4; }
+.opcion img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border: none;
+    box-shadow: none;
+    border-radius: 15px;
+    pointer-events: none;
+}
+
+/* --- JUEGO DE MEMORIA --- */
+.tablero-memoria {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-top: 30px;
+    justify-content: center;
+}
+
+.carta-memoria { width: 100%; aspect-ratio: 1 / 1; perspective: 1000px; cursor: pointer; }
+
+.carta-inner {
+    width: 100%; height: 100%;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+    position: relative;
+}
+
+.carta-memoria.volteada .carta-inner, .carta-memoria.encontrada .carta-inner { transform: rotateY(180deg); }
+
+.carta-front, .carta-back {
+    width: 100%; height: 100%;
+    position: absolute;
+    backface-visibility: hidden;
+    border-radius: 15px;
+    display: flex; justify-content: center; align-items: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.carta-front { background: #9874d0; font-size: 60px; border: 4px solid #7954b5; }
+
+.carta-back {
+    background: #fff;
+    transform: rotateY(180deg);
+    border: 4px solid #f39c12;
+    padding: 10px;
+}
+
+.carta-back img { width: 100%; height: 100%; object-fit: contain; border-radius: 5px; border: none; box-shadow: none; }
+
+.portada-cancion { font-size: 100px; background: #fff2bf; border-radius: 28px; padding: 20px; }
+.controles { margin: 30px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+
+@media(max-width: 900px) {
+    .pantalla { padding: 75px 15px 30px; }
+    .tarjeta, .tarjeta-principal, .categoria { width: 100%; max-width: 400px; }
+    .texto-escena { font-size: 22px; }
+    .opcion { width: 120px; height: 120px; font-size: 50px; }
+    .libro-abierto { flex-direction: column; background: none; }
+    .libro-abierto .escena-imagen, .libro-abierto .contenedor-texto { padding: 0; }
+    h1 { font-size: 2rem; }
+
+    .indicador-progreso { top: 10px; right: 10px; font-size: 1.2rem; padding: 8px 15px; }
+    .btn-superior-izq { top: 10px; left: 10px; font-size: 0.8rem; padding: 8px 12px; }
+    .btn-superior-der { top: 10px; right: 110px; font-size: 0.8rem; padding: 8px 12px; }
+    .btn-fijo-izq { top: 10px; left: 10px; padding: 10px 15px; font-size: 0.9rem; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- Indicador de Rendimiento Global -->
+<div id="indicadorProgreso" class="indicador-progreso oculto">
+    ⭐ <span id="puntosTexto">0</span>
+</div>
+
+<!-- Modal de Feedback -->
+<div id="modalFeedback" class="modal">
+    <div class="modal-contenido">
+        <div id="modalCara" class="cara-niño">👦</div>
+        <div id="modalMensaje" class="mensaje-modal"></div>
+    </div>
+</div>
+
+<!-- Selección de Edad -->
+<section id="seleccion-edad" class="pantalla oculto login">
+    <div class="caja-login">
+        <h1>¡Hola! ¿Cuántos años tienes?</h1>
+        <p>Selecciona tu edad para mostrarte las mejores aventuras.</p>
+        <div class="opciones" style="margin-top: 20px;">
+            <button class="opcion" style="font-size:30px; width: 130px; height: 130px;" onclick="guardarEdad(3)">3<br>AÑOS</button>
+            <button class="opcion" style="font-size:30px; width: 130px; height: 130px;" onclick="guardarEdad(4)">4<br>AÑOS</button>
+            <button class="opcion" style="font-size:30px; width: 130px; height: 130px;" onclick="guardarEdad(5)">5<br>AÑOS</button>
+        </div>
+    </div>
+</section>
+
+<!-- Login -->
+<section id="login" class="pantalla login">
+    <div class="caja-login">
+        <div class="logo">
+            <img src="imagenes/logo.jpg" alt="Logo de PEQUE-MENTE IA">
+        </div>
+        <form id="formLogin">
+            <input id="usuario" placeholder="Nombre de usuario" required>
+            <input id="clave" type="password" placeholder="Contraseña" required>
+            <button type="submit">INGRESAR</button>
+        </form>
+        <button class="secundario" onclick="abrirRegistro()">CREAR CUENTA</button>
+        <p id="mensajeLogin" class="mensaje" style="margin-top:15px; color:red; font-size:1.2rem;"></p>
+    </div>
+</section>
+
+<!-- Registro -->
+<section id="registro" class="pantalla oculto login">
+    <div class="caja-login">
+        <div class="logo">
+            <img src="imagenes/logo.jpg" alt="Logo de PEQUE-MENTE IA">
+        </div>
+        <h1>¡CREA TU CUENTA!</h1>
+        <input id="nuevoUsuario" placeholder="Crea tu usuario">
+        <input id="nuevaClave" type="password" placeholder="Crea tu contraseña">
+        <button onclick="registrar()">REGISTRARME</button>
+        <button class="secundario" onclick="mostrar('login')">VOLVER</button>
+        <p id="mensajeRegistro" class="mensaje" style="margin-top:15px; font-size:1.2rem;"></p>
+    </div>
+</section>
+
+<!-- PANTALLA PRINCIPAL -->
+<section id="inicio" class="pantalla oculto">
+    <button class="salir btn-superior-izq" onclick="salir()">CERRAR SESIÓN</button>
+    <button id="botonSonido" class="volver btn-superior-der" onclick="activarSonido()">🔊 SONIDO ON</button>
+
+    <header>
+        <h1>PEQUE-MENTE IA</h1>
+        <h2 id="bienvenidaUsuario">¡Hola, pequeño explorador!</h2>
+        <p>¿Qué aventura quieres descubrir hoy?</p>
+    </header>
+    <div class="contenedor">
+        <div class="tarjeta tarjeta-principal cuentos-card" onclick="mostrar('cuentos')">
+            <div class="logo">
+                <img src="imagenes/cuaderno_1.jpg" alt="Icono de Cuentos" class="imagen-interactiva">
+            </div>
+            <p></p>
+            <button>EXPLORAR CUENTOS</button>
+        </div>
+        <div class="tarjeta tarjeta-principal canciones-card" onclick="mostrar('canciones')">
+            <div class="logo">
+                <img src="imagenes/canciones_1.jpg" alt="Icono de Canciones" class="imagen-interactiva">
+            </div>
+            <p></p>
+            <button>ESCUCHAR CANCIONES</button>
+        </div>
+    </div>
+</section>
+
+<!-- MUNDO DE LOS CUENTOS -->
+<section id="cuentos" class="pantalla oculto">
+    <button class="volver btn-fijo-izq" onclick="mostrar('inicio')">← VOLVER AL INICIO</button>
+    <h1>MUNDO DE LOS CUENTOS</h1>
+    <p>Elige tu categoría favorita.</p>
+    <div class="contenedor" id="categoriasCuentos"></div>
+    <div class="contenedor" id="listaCuentos"></div>
+</section>
+
+<!-- LECTOR DEL CUENTO -->
+<section id="lector" class="pantalla oculto">
+    <button class="volver btn-fijo-izq" onclick="speechSynthesis.cancel();mostrar('cuentos')">← SALIR DEL CUENTO</button>
+
+    <div class="historia" id="historia">
+        <h1 id="tituloHistoria"></h1>
+        <div id="contenidoCuento" class="libro-cerrado">
+            <div class="escena-imagen" id="imagenHistoria"></div>
+            <div class="contenedor-texto">
+                <p class="texto-escena" id="textoHistoria"></p>
+                <p id="numeroEscena" style="font-size: 1.2rem; color: #a49e91; font-weight: bold;"></p>
+            </div>
+        </div>
+       <div class="controles">
+    <button id="btnAnterior" class="secundario" onclick="anteriorEscena()">← PÁGINA ANTERIOR</button>
+
+    <button onclick="narrar()">🔊 ESCUCHAR</button>
+    <button onclick="pausarAudioCuento()">⏸ PAUSAR</button>
+    <button onclick="continuarAudioCuento()">▶ CONTINUAR</button>
+    <button id="btnSiguiente" onclick="siguienteEscena()">SIGUIENTE HOJA →</button>
+</div>
+    </div>
+
+    <div class="preguntas oculto" id="preguntas">
+        <h1> ¡VAMOS A PENSAR!</h1>
+        <p id="progresoPregunta" style="font-weight: bold; color: #7954b5; font-size: 1.3rem; margin-bottom: 10px;"></p>
+        <h2 id="preguntaTexto"></h2>
+        <p>Selecciona la imagen correcta.</p>
+        <div class="opciones" id="opciones"></div>
+    </div>
+
+    <div class="memoria-juego oculto" id="memoriaSeccion">
+        <h1>¡JUEGO DE MEMORIA!</h1>
+        <p>Encuentra las parejas de las escenas del cuento para ganar más estrellas.</p>
+        <div class="tablero-memoria" id="tableroMemoria"></div>
+        <button id="btnFinMemoria" class="oculto" onclick="mostrar('cuentos')">← VOLVER A LOS CUENTOS</button>
+    </div>
+</section>
+
+<!-- CANCIONES -->
+<section id="canciones" class="pantalla oculto">
+    <button class="volver btn-fijo-izq" onclick="speechSynthesis.cancel();mostrar('inicio')">← VOLVER</button>
+    <h1>🎵 MUNDO DE LAS CANCIONES</h1>
+    <div class="contenedor" id="categoriasCanciones"></div>
+    <div class="contenedor" id="listaCanciones"></div>
+</section>
+
+<script>
+// --- SISTEMA DE AUDIO Y SONIDO ---
+let sonidoActivado = true;
+let contextoAudio = null;
+
+function reproducirSonido(tipo) {
+    if (!sonidoActivado) return;
+    const AudioContexto = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContexto) return;
+    if (!contextoAudio) { contextoAudio = new AudioContexto(); }
+    if (contextoAudio.state === "suspended") { contextoAudio.resume(); }
+
+    const ahora = contextoAudio.currentTime;
+    function nota(frecuencia, inicio, duracion, volumen = 0.12) {
+        const oscilador = contextoAudio.createOscillator();
+        const ganancia = contextoAudio.createGain();
+        oscilador.type = "sine";
+        oscilador.frequency.setValueAtTime(frecuencia, ahora + inicio);
+        ganancia.gain.setValueAtTime(0.001, ahora + inicio);
+        ganancia.gain.linearRampToValueAtTime(volumen, ahora + inicio + 0.02);
+        ganancia.gain.exponentialRampToValueAtTime(0.001, ahora + inicio + duracion);
+        oscilador.connect(ganancia);
+        ganancia.connect(contextoAudio.destination);
+        oscilador.start(ahora + inicio);
+        oscilador.stop(ahora + inicio + duracion + 0.02);
+    }
+    switch (tipo) {
+        case "click": nota(650, 0, 0.10, 0.07); break;
+        case "hoja":  nota(200, 0, 0.15, 0.05); nota(250, 0.1, 0.15, 0.05); break;
+        case "correcto": nota(523, 0, 0.20); nota(659, 0.15, 0.20); nota(784, 0.30, 0.35); break;
+        case "error": nota(350, 0, 0.20); nota(260, 0.18, 0.30); break;
+        case "magia": nota(523, 0, 0.25); nota(659, 0.15, 0.25); nota(784, 0.30, 0.25); nota(1046, 0.45, 0.45); break;
+    }
+}
+
+document.addEventListener("click", function(e) {
+    const esBoton = e.target.closest("button") || e.target.closest(".tarjeta") || e.target.closest(".categoria");
+    if (esBoton && !e.target.closest(".opcion") && !e.target.closest(".carta-memoria") && !e.target.closest("#botonSonido")) { reproducirSonido("click"); }
+});
+
+function activarSonido() {
+    sonidoActivado = !sonidoActivado;
+    const boton = document.getElementById("botonSonido");
+    if (boton) { boton.textContent = sonidoActivado ? "🔊 SONIDO ON" : "🔇 SONIDO OFF"; }
+    if (sonidoActivado) { reproducirSonido("magia"); }
+}
+
+function hablar(texto) {
+    speechSynthesis.cancel();
+    let voz = new SpeechSynthesisUtterance(texto);
+    voz.lang = "es-ES";
+    voz.rate = 0.85;
+    speechSynthesis.speak(voz);
+}
+
+// --- MODAL DE FEEDBACK ---
+
+let temporizadorModal = null;
+function mostrarModal(cara, mensaje, color, duracion, callback) {
+    const modal = document.getElementById("modalFeedback");
+    document.getElementById("modalCara").innerHTML = cara;
+    const msg = document.getElementById("modalMensaje");
+    msg.textContent = mensaje;
+    msg.style.color = color;
+    modal.classList.add("mostrar");
+    clearTimeout(temporizadorModal);
+    temporizadorModal = setTimeout(() => {
+        modal.classList.remove("mostrar");
+        if (callback) callback();
+    }, duracion);
+}
+// --- SISTEMA DE LOGIN Y RENDIMIENTO ---
+let cuentas = JSON.parse(localStorage.getItem("pequeCuentas")) || [];
+let usuarioActual = null;
+
+function mostrar(id) {
+    speechSynthesis.cancel();
+    document.querySelectorAll(".pantalla").forEach(p => p.classList.add("oculto"));
+    document.getElementById(id).classList.remove("oculto");
+
+    let indicador = document.getElementById("indicadorProgreso");
+    if (id !== "login" && id !== "registro" && id !== "seleccion-edad") {
+        indicador.classList.remove("oculto");
+        actualizarPuntuacionUI();
+    } else {
+        indicador.classList.add("oculto");
+    }
+    window.scrollTo(0, 0);
+}
+
+document.getElementById("formLogin").addEventListener("submit", function(e) {
+    e.preventDefault();
+    let usuario = document.getElementById("usuario").value.trim();
+    let clave = document.getElementById("clave").value;
+    let encontrado = cuentas.find(c => c.usuario === usuario && c.clave === clave);
+    if (encontrado) {
+        usuarioActual = encontrado;
+        if (usuarioActual.puntos === undefined) usuarioActual.puntos = 0;
+        document.getElementById("bienvenidaUsuario").textContent = "¡Hola, " + usuarioActual.usuario + "!";
+
+        if (!usuarioActual.edad) {
+            mostrar("seleccion-edad");
+        } else {
+            crearCategoriasCuentos();
+            mostrar("inicio");
+        }
+        document.getElementById("mensajeLogin").textContent = "";
+    } else {
+        document.getElementById("mensajeLogin").textContent = "¡Ups! Revisa tus datos e inténtalo nuevamente.";
+    }
+});
+
+function guardarEdad(edadElegida) {
+    if (usuarioActual) {
+        usuarioActual.edad = edadElegida;
+        guardarDatos();
+        crearCategoriasCuentos();
+        mostrar("inicio");
+    }
+}
+
+function abrirRegistro() { mostrar("registro"); }
+
+function registrar() {
+    let usuario = document.getElementById("nuevoUsuario").value.trim();
+    let clave = document.getElementById("nuevaClave").value;
+    let mensaje = document.getElementById("mensajeRegistro");
+    if (!usuario || !clave) { mensaje.textContent = "Completa todos los campos."; mensaje.style.color = "red"; return; }
+    if (cuentas.some(c => c.usuario === usuario)) { mensaje.textContent = "Este usuario ya existe."; mensaje.style.color = "red"; return; }
+
+    cuentas.push({ usuario, clave, puntos: 0, edad: null });
+    guardarDatos();
+    mensaje.style.color = "green";
+    mensaje.textContent = "¡Cuenta creada! Ya puedes regresar e ingresar.";
+}
+
+function salir() {
+    usuarioActual = null;
+    document.getElementById("usuario").value = "";
+    document.getElementById("clave").value = "";
+    mostrar("login");
+}
+
+function agregarPuntos(cantidad) {
+    if (usuarioActual) {
+        usuarioActual.puntos += cantidad;
+        guardarDatos();
+        actualizarPuntuacionUI();
+    }
+}
+
+function actualizarPuntuacionUI() {
+    if (usuarioActual) {
+        document.getElementById("puntosTexto").textContent = usuarioActual.puntos;
+    }
+}
+
+function guardarDatos() {
+    localStorage.setItem("pequeCuentas", JSON.stringify(cuentas));
+}
+
+// --- BASE DE DATOS DE CUENTOS (2 POR CATEGORÍA) ---
+const cuentos = {
+    "Animales": [
+        {
+            titulo: "El conejito y la amistad",
+            edades: [3, 4, 5],
+            escenas: [
+                ["<img src='imagenes/caratula.png' class='foto-cuento'>",
+                 "Había una vez un conejito llamado Tito que vivía en un bosque lleno de flores. Un día, Tito encontró una zanahoria grande y deliciosa. ¡Qué rica zanahoria! ¡Me la comeré toda! dijo muy feliz.", 
+                 "audios/CT1.mp3"],
+
+                ["<img src='imagenes/E1.png' class='foto-cuento'>", 
+                "De pronto, apareció una pequeña ardilla. Hola, Tito. ¿Puedes compartir un poquito de tu zanahoria? Tengo mucha hambre. Tito miró su zanahoria y se quedó pensando.",
+                  "audios/CT2.mp3" ],
+                ["<img src='imagenes/E2.png' class='foto-cuento'>",
+                 "Tito sonrió y respondió: ¡Claro que sí! Podemos compartirla. Partió la zanahoria en dos pedacitos y le dio uno a su amiga. La ardillita se puso muy contenta. ¡Gracias, Tito! ¡Eres un gran amigo!", 
+                 "audios/CT2.mp3"],
+                ["<img src='imagenes/E3.png' class='foto-cuento'>",
+                 "El conejito levantó sus orejas muy contento: ¡Boing, boing! Dio saltitos de alegría. Los amigos pasaron la tarde corriendo y riendo juntos. Descubrieron que lo más divertido es hacer nuevos amigos.",
+                 "audios/CT3.mp3"]
+            ],
+            preguntas: [
+                { texto: "¿Qué comida encontró Tito el conejito?", opciones: 
+                ["<img src='imagenes/ZA.png' class='foto-cuento'>",
+                "<img src='imagenes/TO.png' class='foto-cuento'>",
+                "<img src='imagenes/PL.png' class='foto-cuento'>"], correcta: 0 },
+                { texto: "¿Con qué animalito compartió su comida?", opciones:
+                 ["<img src='imagenes/PER.png' class='foto-cuento'>",
+                 "<img src='imagenes/ARD.png' class='foto-cuento'>",
+                 "<img src='imagenes/GA.png' class='foto-cuento'>"], correcta: 1 },
+                { texto: "¿Cómo se sintieron al final del cuento?", opciones: ["😭","😴","😊"], correcta: 2 }
+            ]
+        },
+        {
+            titulo: "El bosque de la amistad",
+            edades: [3, 4, 5],
+            escenas: [
+                ["<img src='imagenes/E2.1.png' class='foto-cuento'>",
+                 "En el corazón del Bosque de la Amistad, un simpático osito llamado Bruno y un tierno cervatillo llamado Bambi se encontraron por primera vez junto al gran árbol. ¡Qué alegría tan grande sintieron al verse!",
+                "audios/CB1.mp3"],
+                ["<img src='imagenes/E2.2.png' class='foto-cuento'>",
+                 "Desde ese momento, se volvieron inseparables. ¡Les encantaba jugar a las escondidas entre las flores y correr felices mientras los pajaritos cantaban canciones para ellos!",
+                "audios/CB2.mp3"],
+                ["<img src='imagenes/E2.3.png' class='foto-cuento'>", 
+                "Un día, Bruno y Bambi se sentaron sobre el suave pasto y decidieron compartir sus meriendas favoritas. Bruno le convidó una rica bellota a Bambi, y Bambi le regaló una dulce fresa a Bruno. ¡Compartir es mucho más divertido!",
+                "audios/CB3.mp3"],
+                ["<img src='imagenes/E2.4.png' class='foto-cuento'>",
+                 "Cuando el sol comenzó a atardecer pintando el cielo de colores, los dos amigos se abrazaron con mucho cariño. ¡Se habían convertido en los mejores amigos para siempre en su hermoso bosque!",
+                 "audios/CB4.mp3"]
+            ],
+            preguntas: [
+                { texto: "¿Quiénes se encontraron junto al gran árbol?", opciones: [
+                    "<img src='imagenes/AP2.1.png' class='foto-cuento'>",
+                    "<img src='imagenes/AP2.2.png' class='foto-cuento'>",
+                    "<img src='imagenes/AP2.3.png' class='foto-cuento'>"], correcta: 1 },
+                { texto: "¿A qué jugaban los amigos en el bosque?", opciones: [
+                    "<img src='imagenes/AP2.2.1.png' class='foto-cuento'>",
+                    "<img src='imagenes/AP2.2.2.png' class='foto-cuento'>",
+                    "<img src='imagenes/AP2.2.3.png' class='foto-cuento'>"], correcta: 0 },
+                { texto: "¿Qué compartieron de merienda sobre el pasto?", opciones: [
+                    "<img src='imagenes/AP2.3.1.png' class='foto-cuento'>",
+                    "<img src='imagenes/AP2.3.2.png' class='foto-cuento'>",
+                    "<img src='imagenes/AP2.3.3.png' class='foto-cuento'>"], correcta: 1},
+                    ]
+        }
+    ],
+    "Medio ambiente": [
+        {
+            titulo: "El Sembrador y las Semillitas Mágicas",
+            edades: [3, 4, 5],
+            escenas: [
+                ["<img src='imagenes/E3.1.png' class='foto-cuento'>",
+                 "Había una vez un bondadoso sembrador que caminaba por el campo. Cuando tiró unas semillitas en un camino muy duro, el suelo no las dejó entrar, y los pajaritos bajaron rapidito y se las comieron.",
+                "audios/CC1.mp3"],
+                ["<img src='imagenes/E3.2.png' class='foto-cuento'>",
+                 "Después, tiró otras semillitas en un lugar lleno de piedras. Crecieron un poquito, pero cuando salió el sol fuerte, como no tenían espacio para sus raíces, se secaron y se pusieron tristes.",
+                "audios/CC2.mp3"],
+                ["<img src='imagenes/E3.3.png' class='foto-cuento'>",
+                 "Luego, tiró más semillas cerca de unas plantas con espinas. Las espinas crecieron tanto que las apretaron y no las dejaron respirar ni estirarse.",
+                "audios/CC3.mp3"],
+                ["<img src='imagenes/E3.4.png' class='foto-cuento'>", 
+                "Por último, el sembrador tiró las semillas en una tierra blanda y buena. ¡Ahí recibieron agüita y sol, crecieron fuertes y felices, y dieron muchísimos frutos hermosos!",
+                "audios/CC4.mp3"]
+            ],
+            preguntas: [
+                { texto: "¿Qué se comió las semillas que cayeron en el camino duro?", opciones:
+                 ["<img src='imagenes/CCR1.png' class='foto-cuento'>",
+                 "<img src='imagenes/CCR2.png' class='foto-cuento'>",
+                 "<img src='imagenes/CCR3.png' class='foto-cuento'>"], correcta: 1},
+                { texto: "¿Por qué se secaron las semillas en las piedras?", opciones: 
+                ["<img src='imagenes/CCRP1.png' class='foto-cuento'>",
+                "<img src='imagenes/CCRP2.png' class='foto-cuento'>",
+                "<img src='imagenes/CCRP3.png' class='foto-cuento'>"], correcta: 0 },
+                { texto: "¿En qué se convirtió al final?", opciones: 
+                ["<img src='imagenes/CCRPT1.png' class='foto-cuento'>",
+                "<img src='imagenes/CCRPT2.png' class='foto-cuento'>",
+                "<img src='imagenes/CCRPT3.png' class='foto-cuento'>"], correcta: 1 }
+            ]
+        },
+        {
+            titulo: "La gotita de agua y su gran aventura",
+            edades: [3, 4, 5],
+            escenas: [
+                ["<img src='imagenes/EG1.png' class='foto-cuento'>",
+                 "Había una vez una pequeña gotita llamada Lulú que vivía feliz en un río. Un día, el sol calentó el agua y Lulú comenzó a subir al cielo convertida en vapor.—¡Qué emocionante! ¿A dónde voy? —preguntó Lulú.",
+                "audios/AG1.mp3"],
+                ["<img src='imagenes/EG2.png' class='foto-cuento'>", 
+                "Lulú llegó al cielo y se encontró con muchas gotitas que formaron una enorme nube. —¡Hola, amigas! ¡Ahora somos una nube! —dijo emocionada. De pronto, comenzó a llover y todas las gotitas bajaron a la tierra.",
+                "audios/AG2.mp3"],
+                ["<img src='imagenes/EG3.png' class='foto-cuento'>", 
+                "Lulú cayó sobre una pequeña plantita que estaba triste porque tenía mucha sed. —¡Gracias, gotita! Necesitaba agua para crecer —dijo la plantita. Lulú sonrió al ver cómo sus hojitas se ponían verdes y hermosas.",
+                 "audios/AG3.mp3"],
+                ["<img src='imagenes/EG4.png' class='foto-cuento'>", 
+                "Lulú llegó a una casita y encontró a un conejito dejando el caño abierto. —¡Conejito, no desperdicies el agua! Muchos seres vivos la necesitamos. El conejito cerró el caño y respondió: —¡Tienes razón! Desde hoy cuidaré cada gotita. Y desde aquel día, todos aprendieron que el agua es vida y debemos protegerla. ¡Colorín colorado, esta aventura del agua ha terminado!", 
+                 "audios/AG4.mp3"]
+            ],
+            preguntas: [
+                { texto: "¿Que aprendistes del  cuento?", opciones: [
+                    "<img src='imagenes/P1G.png' class='foto-cuento'>",
+                    "<img src='imagenes/P2G.png' class='foto-cuento'>",
+                    "<img src='imagenes/P3G.png' class='foto-cuento'>"], correcta: 0 },
+                { texto: "¿Qué debemos hacer para no desperdiciar el agua?", opciones: [
+                    "<img src='imagenes/P2G1.png' class='foto-cuento'>",
+                    "<img src='imagenes/P2G2.png' class='foto-cuento'>",
+                    "<img src='imagenes/P2G3.png' class='foto-cuento'>"], correcta: 0 },
+                { texto: "Cómo puedes cuidar el agua en casa", opciones: [
+                    "<img src='imagenes/P3G1.png' class='foto-cuento'>", 
+                    "<img src='imagenes/P3G2.png' class='foto-cuento'>",
+                    "<img src='imagenes/P3G3.png' class='foto-cuento'>"], correcta: 0 }
+            ]
+        }
+    ],
+    "Colores": [
+        {
+            titulo: "El arcoíris perdió sus colores",
+            edades: [3, 4, 5],
+            escenas: [
+                ["<img src='imagenes/EAC1.png' class='foto-cuento'>",
+                 "Había una vez un hermoso arcoíris que vivía en el cielo. Una mañana despertó y descubrió que sus colores habían desaparecido. —¡Oh, no! ¿Dónde están mis colores? ¡Necesito encontrarlos! —dijo muy triste. Así que decidió salir a buscarlos.",
+                "audios/AE1A.mp3"],
+                ["<img src='imagenes/EAC2.png' class='foto-cuento'>",
+                 "En el jardín encontró a Rojito, una pequeña manzana. —¡Hola! Yo soy el color rojo, como las manzanas y los corazones. Luego apareció Amarillito, brillando como el sol. —¡Y yo soy el amarillo, como los girasoles!  El arcoíris se alegró mucho al conocerlos.",
+                "audios/AE2A.mp3"],
+                ["<img src='imagenes/EAC3.png' class='foto-cuento'>", 
+                "Cerca del río encontró a Azulito. —¡Yo soy el azul, como el cielo y el agua! Después conoció a Verdecito, un pequeño árbol. —¡Yo soy el verde, como las hojas y el pasto! El arcoíris estaba feliz porque ya tenía cuatro nuevos amigos.",
+                "audios/AE3A.mp3"],
+                ["<img src='imagenes/EAC4.png' class='foto-cuento'>", 
+                "Los cuatro amigos se tomaron de las manos y comenzaron a bailar. De pronto, una luz mágica iluminó el cielo y el arcoíris recuperó todos sus colores. —¡Gracias, amigos! Ahora sé que cada color hace nuestro mundo más hermoso. Y todos celebraron muy felices.",
+                "audios/AE4A.mp3"]
+            ],
+            preguntas: [
+                { texto: "¿Qué aprendiste del cuento?", opciones: [
+                    "<img src='imagenes/EC1.png' class='foto-cuento'>",
+                    "<img src='imagenes/EC2.png' class='foto-cuento'>",
+                    "<img src='imagenes/EC3.png' class='foto-cuento'>"], correcta: 0 },
+                { texto: "¿De qué color es el sol?", opciones: [
+                    "<img src='imagenes/E2C1.png' class='foto-cuento'>",
+                    "<img src='imagenes/E2C2.png' class='foto-cuento'>",
+                    "<img src='imagenes/E2C3.png' class='foto-cuento'>"], correcta: 1},
+                { texto: "¿Dónde encontramos el color verde?", opciones: [
+                    "<img src='imagenes/E31.png' class='foto-cuento'>",
+                    "<img src='imagenes/E32.png' class='foto-cuento'>",
+                    "<img src='imagenes/E33.png' class='foto-cuento'>"], correcta: 0 }
+            ]
+        },
+        {
+            titulo: "El pintor de colores",
+            edades: [3, 4, 5],
+            escenas: [
+                ["<img src='imagenes/E1CT.png' class='foto-cuento'>",
+                 "Había una vez un niño llamado Tito que soñaba con convertirse en un gran pintor. Un día encontró un pincel mágico y decidió pintar un hermoso jardín. —¡Hoy llenaré el mundo de muchos colores! —exclamó emocionado..",
+                "audios/AE1C.mp3"],
+                ["<img src='imagenes/E2CT.png' class='foto-cuento'>", 
+                "Tito tomó pintura roja y dibujó hermosas flores. Después utilizó el color amarillo para pintar un sol brillante. —¡El rojo está en mis flores y el amarillo en mi solecito! —dijo feliz.", 
+                 "audios/AE2C.mp3"],
+                ["<img src='imagenes/E3CT.png' class='foto-cuento'>", 
+                "Luego tomó el color azul para pintar el cielo y el verde para dibujar el pasto. De pronto, ¡los dibujos comenzaron a cobrar vida! Los pajaritos volaron y las mariposas empezaron a bailar.",
+                "audios/AE3C.mp3"],
+                ["<img src='imagenes/E4CT.png' class='foto-cuento'>",
+                 "Tito terminó su pintura y llamó a sus amigos para mostrarles su hermoso jardín. —¡Miren cuántos colores! ¡Todos son importantes para crear cosas maravillosas! Sus amigos aplaudieron y juntos celebraron su gran obra de arte.",
+                "audios/AE4C.mp3"]
+            ],
+            preguntas: [
+                { texto: "¿Qué aprendiste de la historia de Tito?", opciones: [
+                    "<img src='imagenes/P1CT.png' class='foto-cuento'>",
+                    "<img src='imagenes/P2CT.png' class='foto-cuento'>",
+                    "<img src='imagenes/P3CT.png' class='foto-cuento'>"], correcta: 0 },
+                { texto: "¿Qué color utilizó Tito para pintar el sol?", opciones: [
+                    "<img src='imagenes/P2CT1.png' class='foto-cuento'>",
+                    "<img src='imagenes/P2CT2.png' class='foto-cuento'>",
+                    "<img src='imagenes/P3CT3.png' class='foto-cuento'>"], correcta: 1},
+                { texto: "¿Qué puedes hacer para crear tu propia obra de arte?", opciones: 
+                [   "<img src='imagenes/P3CT3.png' class='foto-cuento'>",
+                    "<img src='imagenes/P3CT2.png' class='foto-cuento'>",
+                    "<img src='imagenes/P1CT.png' class='foto-cuento'>"], correcta: 0 }
+            ]
+        }
+    ],
+  
+    
+};
+
+const iconosCuentos = {
+    "Animales": "<img src='imagenes/ANIMALES1.jpg' class='foto-cuento'>",
+    "Medio ambiente": "<img src='imagenes/MA.PNG' class='foto-cuento'>",
+    "Colores": "<img src='imagenes/C1.jpg' class='foto-cuento'>",
+    "Números": "<img src='imagenes/N1.jpg' class='foto-cuento'>"
+};
+
+
+const canciones = {
+    "Naturaleza": [
+        [
+            "<img src='imagenes/IPNA.png' class='foto-cuento'>",
+            "CUIDEMOS NUESTRO PLANETA",
+              "",
+            "audios/CLN.mp3"
+        ],
+        [
+            "<img src='imagenes/RESIAIM.PNg' class='foto-cuento'>",
+            "RECICLANDO, EL PLANETA VOY CUIDANDO"   ,
+            "",
+            "audios/RESIAUD.mp3"
+        ]
+    ],
+
+    "Animales": [
+        [
+            "<img src='imagenes/PAA.png' class='foto-cuento'>",
+            "EL BAILE DE LOS ANIMALITOS",
+            "",
+            "audios/CCLA.mp3"
+        ],
+        [
+            "<img src='imagenes/PIA2.png' class='foto-cuento'>",
+            "EN MI GRMAJA HAY ALEGRIA",
+             "",
+            "audios/AA2.mp3"
+        ]
+    ],
+
+    "Números": [
+        [
+            "<img src='imagenes/PAN.png' class='foto-cuento'>",
+            "LA FIESTA DE LOS NÚMEROS",
+            "",
+            "audios/CAN.mp3"
+        ],
+        [
+            "<img src='imagenes/PAN2.png' class='foto-cuento'>",
+            "LOS DIEZ PATITOS VAN A NADAR",
+            "",
+            "audios/CAN2.mp3"
+        ]
+    ]
+};
+
+
+const iconosCanciones = { "Naturaleza": "<img src='imagenes/IPNA.png' class='foto-cuento'>", 
+"Animales":  "<img src='imagenes/IPAA.png' class='foto-cuento'>",
+ "Números": "<img src='imagenes/IPNUA.png' class='foto-cuento'>" };
+
+// --- CATEGORÍAS Y LISTA DE CUENTOS ---
+function crearCategoriasCuentos() {
+    let contenedor = document.getElementById("categoriasCuentos");
+    contenedor.innerHTML = "";
+    document.getElementById("listaCuentos").innerHTML = "";
+
+    let edad = usuarioActual ? usuarioActual.edad : null;
+
+    Object.keys(cuentos).forEach(categoria => {
+        let cuentosPorEdad = cuentos[categoria].filter(c => c.edades.includes(edad));
+        if (cuentosPorEdad.length > 0) {
+            contenedor.innerHTML += `
+                <div class="categoria" onclick="verCuentos('${categoria}')">
+                    <span>${iconosCuentos[categoria]}</span><h2>${categoria}</h2>
+                </div>`;
+        }
+    });
+}
+
+function verCuentos(categoria) {
+    let contenedor = document.getElementById("listaCuentos");
+    contenedor.innerHTML = "";
+
+    let edad = usuarioActual ? usuarioActual.edad : null;
+    let cuentosPorEdad = cuentos[categoria].filter(c => c.edades.includes(edad));
+
+    cuentosPorEdad.forEach((cuento, indice) => {
+        contenedor.innerHTML += `
+            <div class="tarjeta" onclick="iniciarCuento('${categoria}',${indice})">
+                <div class="ilustracion"></div>
+                <h2>${cuento.titulo}</h2>
+                <p>¡Descubre esta maravillosa aventura!</p>
+                <button>LEER CUENTO</button>
+            </div>`;
+    });
+
+    contenedor.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// --- LECTOR DE CUENTOS ---
+let cuentoActual;
+let escenaActual = 0;
+let preguntaActual = 0;
+let respondiendo = false;
+
+function iniciarCuento(categoria, indice) {
+    reproducirSonido("magia");
+
+    let edad = usuarioActual ? usuarioActual.edad : null;
+    let cuentosPorEdad = cuentos[categoria].filter(c => c.edades.includes(edad));
+    cuentoActual = cuentosPorEdad[indice];
+
+    escenaActual = 0;
+    preguntaActual = 0;
+    respondiendo = false;
+    mostrar("lector");
+    document.getElementById("historia").classList.remove("oculto");
+    document.getElementById("preguntas").classList.add("oculto");
+    document.getElementById("memoriaSeccion").classList.add("oculto");
+    mostrarEscena();
+}
+function mostrarEscena() {
+    let escena = cuentoActual.escenas[escenaActual];
+    let contenedorLibro = document.getElementById("contenidoCuento");
+
+    document.getElementById("tituloHistoria").textContent = cuentoActual.titulo;
+    document.getElementById("imagenHistoria").innerHTML = escena[0];
+    document.getElementById("textoHistoria").textContent = escena[1];
+    document.getElementById("numeroEscena").textContent = "Página " + (escenaActual + 1) + " de " + cuentoActual.escenas.length;
+
+    contenedorLibro.className = (escenaActual === 0) ? "libro-cerrado" : "libro-abierto";
+    document.getElementById("btnAnterior").style.display = (escenaActual === 0) ? "none" : "inline-block";
+    document.getElementById("btnSiguiente").textContent = (escenaActual === cuentoActual.escenas.length - 1) ? "IR A LAS PREGUNTAS →" : "SIGUIENTE PÁGINA →";
+}
+
+
+// --- AUDIO MP3 DE LOS CUENTOS ---
+let audioCuentoActual = null;
+
+function detenerAudioCuento() {
+    if (audioCuentoActual) {
+        audioCuentoActual.pause();
+        audioCuentoActual.currentTime = 0;
+        audioCuentoActual = null;
+    }
+    speechSynthesis.cancel();
+}
+
+function narrar() {
+    detenerAudioCuento();
+
+    const escena = cuentoActual.escenas[escenaActual];
+    const rutaAudio = escena[2];
+
+    if (rutaAudio) {
+        audioCuentoActual = new Audio(rutaAudio);
+
+        audioCuentoActual.onerror = function() {
+            alert("No se pudo cargar el MP3: " + rutaAudio);
+        };
+
+        audioCuentoActual.play().catch(function(error) {
+            alert("Error al reproducir el audio: " + error.message);
+        });
+    } else {
+        hablar(escena[1]);
+    }
+}
+
+function pausarAudioCuento() {
+    if (audioCuentoActual) {
+        audioCuentoActual.pause();
+    } else {
+        speechSynthesis.pause();
+    }
+}
+
+function continuarAudioCuento() {
+    if (audioCuentoActual) {
+        audioCuentoActual.play().catch(function(error) {
+            alert("No se pudo continuar el audio: " + error.message);
+        });
+    } else {
+        speechSynthesis.resume();
+    }
+}
+
+
+function siguienteEscena() {
+    if (escenaActual < cuentoActual.escenas.length - 1) {
+        escenaActual++;
+        detenerAudioCuento();
+        mostrarEscena();
+    } else {
+        detenerAudioCuento();
+        mostrarPregunta();
+    }
+}
+
+function anteriorEscena() {
+    if (escenaActual > 0) {
+        escenaActual--;
+        detenerAudioCuento();
+        mostrarEscena();
+    }
+}
+
+function anteriorEscena() {
+    if (escenaActual > 0) {
+        detenerAudioCuento();
+        escenaActual--;
+        mostrarEscena();
+    }
+}
+
+let audioCuentoURL = null;
+
+function cargarAudioCuento(event) {
+    const archivo = event.target.files[0];
+
+    if (!archivo) return;
+
+    if (!archivo.type.startsWith("audio/")) {
+        alert("Selecciona un archivo de audio MP3.");
+        event.target.value = "";
+        return;
+    }
+
+    const reproductor = document.getElementById("reproductorCuento");
+
+    if (audioCuentoURL) {
+        URL.revokeObjectURL(audioCuentoURL);
+    }
+
+    reproductor.pause();
+
+    audioCuentoURL = URL.createObjectURL(archivo);
+    reproductor.src = audioCuentoURL;
+    reproductor.load();
+
+    alert("¡Audio agregado correctamente al cuento!");
+}
+
+
+// --- PREGUNTAS ---
+function mostrarPregunta() {
+    speechSynthesis.cancel();
+    document.getElementById("historia").classList.add("oculto");
+    document.getElementById("memoriaSeccion").classList.add("oculto");
+    document.getElementById("preguntas").classList.remove("oculto");
+
+    let total = cuentoActual.preguntas.length;
+    let p = cuentoActual.preguntas[preguntaActual];
+
+    document.getElementById("progresoPregunta").textContent = "Pregunta " + (preguntaActual + 1) + " de " + total;
+    document.getElementById("preguntaTexto").textContent = p.texto;
+
+    let opciones = document.getElementById("opciones");
+    opciones.innerHTML = "";
+    p.opciones.forEach((emoji, i) => {
+        let boton = document.createElement("button");
+        boton.className = "opcion";
+        boton.innerHTML = emoji;
+        boton.onclick = () => responder(i);
+        opciones.appendChild(boton);
+    });
+
+    respondiendo = false;
+    window.scrollTo(0, 0);
+    hablar(p.texto);
+}
+
+function responder(indice) {
+    if (respondiendo) return;
+    let p = cuentoActual.preguntas[preguntaActual];
+
+    if (indice === p.correcta) {
+        respondiendo = true;
+        reproducirSonido("correcto");
+        agregarPuntos(10);
+        mostrarModal( "<img src='imagenes/RFL.png' class='foto-cuento'>","¡Muy bien!", "#2e9d5b", 1600, () => {
+            preguntaActual++;
+            if (preguntaActual < cuentoActual.preguntas.length) { mostrarPregunta(); }
+            else { iniciarMemoria(); }
+        });
+   } else {
+    respondiendo = true;
+    reproducirSonido("error");
+
+    mostrarModal(
+        "<img src='imagenes/RT.png' class='foto-cuento'>",
+        "¡Vuélvelo a intentar!",
+        "#d9534f",
+        1600,
+        () => {
+            respondiendo = false;
+        }
+    );
+}
+}
+
+// --- JUEGO DE MEMORIA ---
+let cartasVolteadas = [];
+let parejasEncontradas = 0;
+let totalParejas = 0;
+let bloqueoMemoria = false;
+
+function iniciarMemoria() {
+    speechSynthesis.cancel();
+    document.getElementById("preguntas").classList.add("oculto");
+    document.getElementById("memoriaSeccion").classList.remove("oculto");
+    document.getElementById("btnFinMemoria").classList.add("oculto");
+
+    cartasVolteadas = [];
+    parejasEncontradas = 0;
+    bloqueoMemoria = false;
+
+    let escenas = cuentoActual.escenas.slice(0, 4);
+    totalParejas = escenas.length;
+
+    let cartas = [];
+    escenas.forEach((escena, id) => {
+        cartas.push({ id: id, html: escena[0] });
+        cartas.push({ id: id, html: escena[0] });
+    });
+    cartas.sort(() => Math.random() - 0.5);
+
+    let tablero = document.getElementById("tableroMemoria");
+    tablero.innerHTML = "";
+    cartas.forEach(c => {
+        let div = document.createElement("div");
+        div.className = "carta-memoria";
+        div.dataset.id = c.id;
+        div.innerHTML = `<div class="carta-inner">
+            <div class="carta-front">❓</div>
+            <div class="carta-back">${c.html}</div>
+        </div>`;
+        div.addEventListener("click", () => voltearCarta(div));
+        tablero.appendChild(div);
+    });
+    window.scrollTo(0, 0);
+}
+
+function voltearCarta(carta) {
+    if (bloqueoMemoria) return;
+    if (carta.classList.contains("volteada") || carta.classList.contains("encontrada")) return;
+
+    carta.classList.add("volteada");
+    reproducirSonido("hoja");
+    cartasVolteadas.push(carta);
+
+    if (cartasVolteadas.length === 2) {
+        bloqueoMemoria = true;
+        let [a, b] = cartasVolteadas;
+
+        if (a.dataset.id === b.dataset.id) {
+            setTimeout(() => {
+                a.classList.remove("volteada"); b.classList.remove("volteada");
+                a.classList.add("encontrada"); b.classList.add("encontrada");
+                reproducirSonido("correcto");
+                agregarPuntos(5);
+                parejasEncontradas++;
+                cartasVolteadas = [];
+                bloqueoMemoria = false;
+
+                if (parejasEncontradas === totalParejas) {
+                    agregarPuntos(10);
+                    reproducirSonido("magia");
+                    mostrarModal("🏆", "✨ ¡Lo lograste! ✨", "#f39c12", 2200, () => {
+                        document.getElementById("btnFinMemoria").classList.remove("oculto");
+                    });
+                }
+            }, 600);
+        } else {
+            setTimeout(() => {
+                a.classList.remove("volteada");
+                b.classList.remove("volteada");
+                reproducirSonido("error");
+                cartasVolteadas = [];
+                bloqueoMemoria = false;
+            }, 1000);
+        }
+    }
+}
+
+// --- CANCIONES ---
+function crearCategoriasCanciones() {
+    let contenedor = document.getElementById("categoriasCanciones");
+    contenedor.innerHTML = "";
+    Object.keys(canciones).forEach(categoria => {
+        contenedor.innerHTML += `
+            <div class="categoria" onclick="verCanciones('${categoria}')">
+                <span>${iconosCanciones[categoria]}</span><h2>${categoria}</h2>
+            </div>`;
+    });
+}
+
+function verCanciones(categoria) {
+    let contenedor = document.getElementById("listaCanciones");
+    contenedor.innerHTML = "";
+    canciones[categoria].forEach((cancion, indice) => {
+        contenedor.innerHTML += `
+            <div class="tarjeta">
+                <div class="portada-cancion">${cancion[0]}</div>
+                <h2>${cancion[1]}</h2>
+                <p>${cancion[2]}</p>
+                <button onclick="cantarCancion('${categoria}',${indice})">🔊 ESCUCHAR</button>
+                <button class="secundario" onclick="detenerCancion()">⏹ PARAR</button>
+            </div>`;
+    });
+    contenedor.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+let audioCancionActual = null;
+
+function cantarCancion(categoria, indice) {
+    speechSynthesis.cancel();
+
+    if (audioCancionActual) {
+        audioCancionActual.pause();
+        audioCancionActual.currentTime = 0;
+    }
+
+    const cancion = canciones[categoria][indice];
+    const rutaAudio = cancion[3];
+
+    if (!rutaAudio) {
+        alert("Esta canción no tiene un archivo MP3 asignado.");
+        return;
+    }
+
+    audioCancionActual = new Audio();
+
+    audioCancionActual.src = rutaAudio;
+
+    audioCancionActual.addEventListener("error", function () {
+        alert("No se pudo cargar el MP3: " + rutaAudio);
+    });
+
+    audioCancionActual.play().catch(function (error) {
+        alert("Error al reproducir: " + error.message);
+    }); 
+}
+
+function detenerCancion() {
+    speechSynthesis.cancel();
+
+    if (audioCancionActual) {
+        audioCancionActual.pause();
+        audioCancionActual.currentTime = 0;
+        audioCancionActual = null;
+    }
+}
+
+
+
+crearCategoriasCanciones();
+</script>
+
+</body>
+</html>
